@@ -1,7 +1,7 @@
 [PATHS]
-base_path = /Users/Ratna-Kumar.Dangeti/Desktop/Scripts/DataMasking
+base_path = /Users/Ratna-Kumar.Dangeti/Documents/GitHub/DataMasking
 input_folder = Landing
-mask_folder = Extract_del
+mask_folder = Extract
 
 [file2]
 src_file = data1.csv

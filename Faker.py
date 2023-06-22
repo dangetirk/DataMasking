@@ -1,3 +1,6 @@
+#to run the script Faker.py <config file with or without directory>
+#to run the script Faker.py config.dat
+
 import pandas as pd
 from faker import Faker
 import os
