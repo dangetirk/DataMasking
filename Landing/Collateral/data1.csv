@@ -1,0 +1,4 @@
+CustomerID,Name,Surname,Gender,Age,Region,Job Classification,Date Joined,Balance
+100000001,Joshua Ruiz,Kumar,Male,21,Indiana,White Collar,05.Jan.15,113810.15
+400000002,Christopher Brady,wood,Female,34,Florida,Blue Collar,06.Jan.15,36919.73
+100000003,Andrew Miller,JACKSON,Male,46,California,White Collar,07.Jan.15,101536.83

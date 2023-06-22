@@ -1,0 +1,19 @@
+[PATHS]
+base_path = /Users/Ratna-Kumar.Dangeti/Desktop/Scripts/DataMasking
+input_folder = Landing
+mask_folder = Extract_del
+
+[file2]
+src_file = data1.csv
+columns = Name=name,Region=state,Job Classification=job
+src_folder = Collateral
+
+[file1]
+src_file = data2.csv
+columns = Name=name,Age=age 
+src_folder = Collateral
+
+[file3]
+src_file = data3.csv
+columns = Name=name,Age=age
+src_folder = Covenants

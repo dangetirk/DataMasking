@@ -1,0 +1,4 @@
+CustomerID,Name,Surname,Gender,Age,Region,JobClassification,Date Joined,Balance
+100000001,Stephanie Jensen,Kumar,Male,6599,INDIA,White Collar,05.Jan.15,113810.15
+400000002,Tracy Gardner,wood,Female,3230,MALAYSIA Ireland,Blue Collar,06.Jan.15,36919.73
+100000003,Anthony Johnson,JACKSON,Male,1444,SINGOPORE,White Collar,07.Jan.15,101536.83

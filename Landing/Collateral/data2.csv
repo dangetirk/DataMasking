@@ -1,0 +1,4 @@
+CustomerID,Name,Surname,Gender,Age,Region,JobClassification,Date Joined,Balance
+100000001,Charles Ramirez,Kumar,Male,3896,INDIA,White Collar,05.Jan.15,113810.15
+400000002,Catherine Branch,wood,Female,1719,MALAYSIA Ireland,Blue Collar,06.Jan.15,36919.73
+100000003,Cassandra Jones,JACKSON,Male,3749,SINGOPORE,White Collar,07.Jan.15,101536.83
