@@ -1,5 +1,5 @@
 [PATHS]
-base_path = /Users/Ratna-Kumar.Dangeti/Documents/GitHub/DataMasking
+base_path = C:\Users\7701667\git\DataMasking\DataMasking
 input_folder = Landing
 mask_folder = Extract
 
@@ -12,8 +12,3 @@ src_folder = Collateral
 src_file = data2.csv
 columns = Name=name,Age=age 
 src_folder = Collateral
-
-[file3]
-src_file = data3.csv
-columns = Name=name,Age=age
-src_folder = Covenants

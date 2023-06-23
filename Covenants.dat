@@ -1,0 +1,9 @@
+[PATHS]
+base_path = C:\Users\7701667\git\DataMasking\DataMasking
+input_folder = Landing
+mask_folder = Extract
+
+[file3]
+src_file = data3.csv
+columns = Name=name,Age=age
+src_folder = Covenants
