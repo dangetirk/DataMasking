@@ -1,15 +1,3 @@
-import pandas as pd
-from faker import Faker
-import os
-import random
-import configparser
-import sys
-import logging
-from datetime import datetime
-import csv
-
-# ... [Other parts of your script, such as logger setup, fake data generators, etc.] ...
-
 def process_config_entries(config_entries, input_dir, mask_folder):
     path = os.getcwd()
 
@@ -27,8 +15,9 @@ def process_config_entries(config_entries, input_dir, mask_folder):
             logger.warning(f"The file '{input_file_path}' does not exist. Skipping this file.")
             continue
 
-        # Increase the CSV field size limit
-        csv.field_size_limit(sys.maxsize)
+        # Set a high but manageable field size limit
+        max_int = 2147483647 # Maximum value for a 32-bit integer
+        csv.field_size_limit(max_int)
 
         with open(input_file_path, 'r', newline='') as file:
             reader = csv.reader(file, delimiter='|', quoting=csv.QUOTE_ALL, escapechar='\\')
@@ -48,11 +37,10 @@ def process_config_entries(config_entries, input_dir, mask_folder):
 
         csv_body = body.to_csv(index=False, sep='|', header=False, quoting=csv.QUOTE_NONE, quotechar="", escapechar="\\")
 
+        output_file = os.path.join(output_dir, src_file.replace('.csv', '_mask.csv'))
         with open(output_file, 'w', newline='\n') as file:
             file.write(header)
             file.write(csv_body)
             file.write(footer)
 
         logger.info(f"Masked file saved to {output_file}")
-
-# ... [Rest of your script, including the main execution block] ...
