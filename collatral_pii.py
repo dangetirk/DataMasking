@@ -81,7 +81,9 @@ def process_config_entries(config_entries, input_dir, mask_folder):
     path = os.getcwd()
     for entry in config_entries:
         src_file = entry['src_file']
-        column_mappings = entry['columns']
+        # Parse column_mappings as a dictionary from the configuration entry
+        column_mappings_str = entry['columns']
+        column_mappings = dict(column.split('=') for column in column_mappings_str.split(','))
         quoted_columns = entry.get('quoted_columns', '').split(',')
         src_folder = entry['src_folder']
 
@@ -95,7 +97,7 @@ def process_config_entries(config_entries, input_dir, mask_folder):
             logger.warning(f"The file '{input_file_path}' does not exist. Skipping this file.")
             continue
 
-        output_file = os.path.join(output_dir, src_file.replace('.csv', '_mask.csv'))
+        output_file = os.path.join(output_dir, src_file.replace('.txt', '_mask.txt'))
 
         # Error handling if the source folder doesn't exist
         src_folder_path = os.path.join(input_dir, src_folder)
