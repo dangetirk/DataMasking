@@ -62,9 +62,14 @@ def replace_columns_with_fake_data(dataframe, column_mappings, quoted_columns):
                     lambda x: f'"{fake_data_functions[fake_data_type]()}"'
                 )
             else:
+                value_before_replacement = dataframe[column].iloc[0]  # Get the first value for debugging
                 dataframe[column] = column_values.apply(
                     lambda x: fake_data_functions[fake_data_type]()
                 )
+                value_after_replacement = dataframe[column].iloc[0]  # Get the first value after replacement
+                print(f"Column: {column}")
+                print(f"Value before replacement: {value_before_replacement}")
+                print(f"Value after replacement: {value_after_replacement}")
         else:
             logger.warning(f"Invalid fake data type for column {column}!")
 
@@ -103,13 +108,11 @@ def process_config_entries(config_entries, input_dir, mask_folder):
             logger.error(f"The source folder '{src_folder_path}' does not exist. Exiting.")
             sys.exit(1)
 
-        # Process the file in chunks to handle large files
-        chunk_size = 10000  # Adjust the chunk size as needed
-        chunks = pd.read_csv(input_file_path, sep='|', dtype=str, low_memory=False, encoding='latin1', chunksize=chunk_size)
+        df = pd.read_csv(input_file_path, sep='|', dtype=str, low_memory=False, encoding='latin1')
+        column_mappings = dict(column.split('=') for column in column_mappings.split(','))
 
-        for chunk in chunks:
-            chunk = replace_columns_with_fake_data(chunk, column_mappings, quoted_columns)
-            chunk.to_csv(output_file, mode='a', index=False, sep='|', quoting=1, quotechar='"', escapechar='\\')
+        df = replace_columns_with_fake_data(df, column_mappings, quoted_columns)
+        df.to_csv(output_file, index=False, sep='|', quoting=1, quotechar='"', escapechar='\\')
 
         logger.info(f"Masked file saved to {output_file}")
 
