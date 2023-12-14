@@ -29,7 +29,8 @@ def generate_fake_age(fake, min_age=20, max_age=90):
     dob = fake.date_of_birth(minimum_age=min_age, maximum_age=max_age)
     return calculate_age(dob)
 
-def generate_fake_data(row):
+# Function to replace column values with fake data
+def replace_columns_with_fake_data(dataframe, column_mappings, quoted_columns):
     fake = Faker('en_GB')
     fake_data_functions = {
         "first_name": fake.first_name,
@@ -53,39 +54,64 @@ def generate_fake_data(row):
         "text": fake.word
     }
 
-    for column in row.index:
-        if column in fake_data_functions:
-            row[column] = fake_data_functions[column]()
+    for column, fake_data_type in column_mappings.items():
+        if fake_data_type in fake_data_functions:
+            column_values = dataframe[column]
+            if column_values.dtype == object and column in quoted_columns:
+                dataframe[column] = column_values.apply(
+                    lambda x: f'"{fake_data_functions[fake_data_type]()}"'
+                )
+            else:
+                dataframe[column] = column_values.apply(
+                    lambda x: fake_data_functions[fake_data_type]()
+                )
         else:
             logger.warning(f"Invalid fake data type for column {column}!")
 
-    return row
+    return dataframe
 
-def process_file(input_file_path, output_file):
-    try:
-        df = pd.read_csv(input_file_path, sep='|', dtype=str, low_memory=False, encoding='latin1')
-        df = df.apply(generate_fake_data, axis=1)
-        df.to_csv(output_file, index=False, sep='|', quoting=1, quotechar='"', escapechar='\\')
-        logger.info(f"Masked file saved to {output_file}")
-    except Exception as e:
-        logger.error(f"Error processing file {input_file_path}: {str(e)}")
+# Read the configuration from a file
+def read_config_file(config_file):
+    config = configparser.ConfigParser()
+    config.read(config_file)
+    return config
 
+# Process the configuration entries
 def process_config_entries(config_entries, input_dir, mask_folder):
     path = os.getcwd()
     for entry in config_entries:
         src_file = entry['src_file']
+        column_mappings = entry['columns']
+        quoted_columns = entry.get('quoted_columns', '').split(',')
         src_folder = entry['src_folder']
 
-        input_file_path = os.path.join(input_dir, src_folder, src_file)
         output_dir = os.path.join(path, mask_folder, src_folder)
         os.makedirs(output_dir, exist_ok=True)
 
+        input_file_path = os.path.join(input_dir, src_folder, src_file)
+
+        # Error handling if the input file doesn't exist
         if not os.path.isfile(input_file_path):
             logger.warning(f"The file '{input_file_path}' does not exist. Skipping this file.")
             continue
 
         output_file = os.path.join(output_dir, src_file.replace('.csv', '_mask.csv'))
-        process_file(input_file_path, output_file)
+
+        # Error handling if the source folder doesn't exist
+        src_folder_path = os.path.join(input_dir, src_folder)
+        if not os.path.isdir(src_folder_path):
+            logger.error(f"The source folder '{src_folder_path}' does not exist. Exiting.")
+            sys.exit(1)
+
+        # Process the file in chunks to handle large files
+        chunk_size = 10000  # Adjust the chunk size as needed
+        chunks = pd.read_csv(input_file_path, sep='|', dtype=str, low_memory=False, encoding='latin1', chunksize=chunk_size)
+
+        for chunk in chunks:
+            chunk = replace_columns_with_fake_data(chunk, column_mappings, quoted_columns)
+            chunk.to_csv(output_file, mode='a', index=False, sep='|', quoting=1, quotechar='"', escapechar='\\')
+
+        logger.info(f"Masked file saved to {output_file}")
 
 if len(sys.argv) < 2:
     print("Please provide a path to the configuration file as an argument.")
