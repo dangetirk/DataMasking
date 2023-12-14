@@ -1,36 +1,58 @@
-def replace_columns_with_fake_data(dataframe, column_mappings):
-    fake = Faker('en_GB')
-    fake_data_functions = {
-        "first_name": fake.first_name,
-        "last_name": fake.last_name,
-        "name": fake.name,
-        "age": lambda: generate_fake_age(fake),
-        "random_int": fake.random_int,
-        "city": fake.city,
-        "state": lambda: random.choice(["ENG", "SCO", "WAL", "NIR"]),
-        "address_line1": fake.street_address,
-        "address_line2": fake.secondary_address,
-        "zipcode": fake.postcode,
-        "comments": fake.sentence,
-        "phone_number": fake.phone_number,
-        "email": fake.email,
-        "company": fake.company,
-        "job": fake.job,
-        "date_of_birth": fake.date_of_birth,
-        "organization": fake.company,
-        "sort_code": generate_sort_code,
-        "alphanumeric": lambda: fake.bothify(text='??????'),
-        "text": fake.word,
-        # Add more types if needed
-    }
+import pandas as pd
+from faker import Faker
+import os
+import random
+import configparser
+import sys
+import logging
+from datetime import datetime
+import csv
 
-    for column, fake_data_type in column_mappings.items():
-        if fake_data_type in fake_data_functions:
-            column_index = int(column) - 1
-            dataframe.iloc[:, column_index] = dataframe.iloc[:, column_index].apply(
-                lambda x: fake_data_functions[fake_data_type]() if pd.notnull(x) and x.strip() != '' else x
-            )
-        else:
-            logger.warning(f"Invalid fake data type for column {column}!")
+# ... [Other parts of your script, such as logger setup, fake data generators, etc.] ...
 
-    return dataframe
+def process_config_entries(config_entries, input_dir, mask_folder):
+    path = os.getcwd()
+
+    for entry in config_entries:
+        src_file = entry['src_file']
+        column_mappings = entry['columns']
+        src_folder = entry['src_folder']
+
+        output_dir = os.path.join(path, mask_folder, src_folder)
+        os.makedirs(output_dir, exist_ok=True)
+
+        input_file_path = os.path.join(input_dir, src_folder, src_file)
+
+        if not os.path.isfile(input_file_path):
+            logger.warning(f"The file '{input_file_path}' does not exist. Skipping this file.")
+            continue
+
+        # Increase the CSV field size limit
+        csv.field_size_limit(sys.maxsize)
+
+        with open(input_file_path, 'r', newline='') as file:
+            reader = csv.reader(file, delimiter='|', quoting=csv.QUOTE_ALL, escapechar='\\')
+            lines = list(reader)
+
+        header = '|'.join(lines[0]) + '\n'
+        footer = '|'.join(lines[-1]) + '\n'
+        body_lines = lines[1:-1]
+
+        # Convert list of lists to a DataFrame
+        body = pd.DataFrame(body_lines, dtype=str)
+
+        column_mappings = dict(column.split('=') for column in column_mappings.split(','))
+
+        body = replace_columns_with_fake_data(body, column_mappings)
+        body = body.applymap(lambda x: x.replace("|", ",").replace("\n", " ") if isinstance(x, str) else x)
+
+        csv_body = body.to_csv(index=False, sep='|', header=False, quoting=csv.QUOTE_NONE, quotechar="", escapechar="\\")
+
+        with open(output_file, 'w', newline='\n') as file:
+            file.write(header)
+            file.write(csv_body)
+            file.write(footer)
+
+        logger.info(f"Masked file saved to {output_file}")
+
+# ... [Rest of your script, including the main execution block] ...
