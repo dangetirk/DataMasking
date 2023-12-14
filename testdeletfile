@@ -15,12 +15,11 @@ def process_config_entries(config_entries, input_dir, mask_folder):
             logger.warning(f"The file '{input_file_path}' does not exist. Skipping this file.")
             continue
 
-        # Set a high but manageable field size limit
-        max_int = 2147483647 # Maximum value for a 32-bit integer
-        csv.field_size_limit(max_int)
+        output_file = os.path.join(output_dir, src_file.replace('.csv', '_mask.csv'))
 
         with open(input_file_path, 'r', newline='') as file:
-            reader = csv.reader(file, delimiter='|', quoting=csv.QUOTE_ALL, escapechar='\\')
+            # Change the quoting to QUOTE_MINIMAL or QUOTE_NONE
+            reader = csv.reader(file, delimiter='|', quoting=csv.QUOTE_MINIMAL, escapechar='\\')
             lines = list(reader)
 
         header = '|'.join(lines[0]) + '\n'
@@ -37,7 +36,6 @@ def process_config_entries(config_entries, input_dir, mask_folder):
 
         csv_body = body.to_csv(index=False, sep='|', header=False, quoting=csv.QUOTE_NONE, quotechar="", escapechar="\\")
 
-        output_file = os.path.join(output_dir, src_file.replace('.csv', '_mask.csv'))
         with open(output_file, 'w', newline='\n') as file:
             file.write(header)
             file.write(csv_body)
