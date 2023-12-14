@@ -59,7 +59,7 @@ def replace_columns_with_fake_data(dataframe, column_mappings, quoted_columns):
             column_values = dataframe[column]
             if column_values.dtype == object and column not in quoted_columns:
                 dataframe[column] = column_values.apply(
-                    lambda x: fake_data_functions[fake_data_type]()
+                    lambda x: fake_data_functions[fake_data_type]() if '"' not in x else x
                 )
         else:
             logger.warning(f"Invalid fake data type for column {column}!")
