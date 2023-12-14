@@ -57,11 +57,7 @@ def replace_columns_with_fake_data(dataframe, column_mappings, quoted_columns):
     for column, fake_data_type in column_mappings.items():
         if fake_data_type in fake_data_functions:
             column_values = dataframe[column]
-            if column_values.dtype == object and column in quoted_columns:
-                dataframe[column] = column_values.apply(
-                    lambda x: f'"{fake_data_functions[fake_data_type]()}"'
-                )
-            else:
+            if column_values.dtype == object and column not in quoted_columns:
                 dataframe[column] = column_values.apply(
                     lambda x: fake_data_functions[fake_data_type]()
                 )
@@ -81,9 +77,7 @@ def process_config_entries(config_entries, input_dir, mask_folder):
     path = os.getcwd()
     for entry in config_entries:
         src_file = entry['src_file']
-        # Parse column_mappings as a dictionary from the configuration entry
-        column_mappings_str = entry['columns']
-        column_mappings = dict(column.split('=') for column in column_mappings_str.split(','))
+        column_mappings = entry['columns']
         quoted_columns = entry.get('quoted_columns', '').split(',')
         src_folder = entry['src_folder']
 
@@ -97,7 +91,7 @@ def process_config_entries(config_entries, input_dir, mask_folder):
             logger.warning(f"The file '{input_file_path}' does not exist. Skipping this file.")
             continue
 
-        output_file = os.path.join(output_dir, src_file.replace('.txt', '_mask.txt'))
+        output_file = os.path.join(output_dir, src_file.replace('.csv', '_mask.csv'))
 
         # Error handling if the source folder doesn't exist
         src_folder_path = os.path.join(input_dir, src_folder)
@@ -105,11 +99,11 @@ def process_config_entries(config_entries, input_dir, mask_folder):
             logger.error(f"The source folder '{src_folder_path}' does not exist. Exiting.")
             sys.exit(1)
 
-        chunk_size = 10000  # Adjust the chunk size as needed
-        for chunk in pd.read_csv(input_file_path, sep='|', dtype=str, low_memory=False, encoding='latin1', chunksize=chunk_size):
-            # Process and mask the chunk
-            chunk = replace_columns_with_fake_data(chunk, column_mappings, quoted_columns)
-            chunk.to_csv(output_file, mode='a', index=False, sep='|', quoting=1, quotechar='"', escapechar='\\')
+        df = pd.read_csv(input_file_path, sep='|', dtype=str, low_memory=False, encoding='latin1')
+        column_mappings = dict(column.split('=') for column in column_mappings.split(','))
+
+        df = replace_columns_with_fake_data(df, column_mappings, quoted_columns)
+        df.to_csv(output_file, index=False, sep='|', quoting=1, quotechar='"', escapechar='\\')
 
         logger.info(f"Masked file saved to {output_file}")
 
