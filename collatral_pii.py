@@ -39,22 +39,17 @@ def read_config_file(config_file):
     config = configparser.ConfigParser()
     config.read(config_file)
     return config
-
 def mask_postcode(postcode):
-    """Mask the postcode, retaining characters before the first numeric and masking the rest."""
-    masked_postcode = []
-    numeric_found = False
-    for char in postcode:
-        if char.isdigit() and not numeric_found:
-            numeric_found = True
-            masked_postcode.append('X')
-        elif numeric_found:
-            masked_postcode.append('X')
-        else:
-            masked_postcode.append(char)
-    return ''.join(masked_postcode)
+    """Mask the postcode, retaining characters before the first space and replacing characters after the space with 'Z' if space found, or replace from the 3rd character onwards with 'Z' if no space found."""
+    if ' ' in postcode:
+        parts = postcode.split(' ')
+        first_part = parts[0]
+        second_part = 'X' * len(parts[1])
+        return f"{first_part} {second_part}"
+    else:
+        return f"{postcode[:2]}{'Z' * (len(postcode) - 2)}"
 
-import re
+
 
 def replace_first_name(name):
     """Replace first name based on specific patterns."""
@@ -68,47 +63,6 @@ def replace_first_name(name):
         return 'CHLOE'
     else:
         return name  # Return the original name if no pattern matches
-
-# Testing the function with a sample name
-print(replace_first_name("ratjajusarrivehowto"))  # Expected output: "CHLOE"
-
-
-def replace_columns_with_fake_data(dataframe, column_mappings):
-    fake = Faker('en_GB')
-    fake_data_functions = {
-        "first_name": replace_first_name,  # Custom function for first_name
-        #"last_name": fake.last_name,
-        "name": fake.name,
-        "age": lambda: generate_fake_age(fake),
-        "random_int": fake.random_int,
-        "city": fake.city,
-        "state": lambda: random.choice(["ENG", "SCO", "WAL", "NIR"]),
-        "address_line1": fake.street_address,
-        "address_line2": fake.secondary_address,
-        "postcode": mask_postcode,  # Custom function for postcode
-        "comments": fake.sentence,
-        "phone_number": fake.phone_number,
-        "email": fake.email,
-        "company": fake.company,
-        "job": fake.job,
-        "date_of_birth": fake.date_of_birth,
-        "organization": fake.company,
-        "sort_code": generate_sort_code,
-        "singlechar": singleint,
-        "alphanumeric": lambda: fake.bothify(text='??????'),
-        "text": fake.word
-    }
-
-    for column, fake_data_type in column_mappings.items():
-        column_index = int(column) - 1
-        if fake_data_type in fake_data_functions:
-            dataframe.iloc[:, column_index] = dataframe.iloc[:, column_index].apply(
-                lambda x: fake_data_functions[fake_data_type](x) if pd.notnull(x) and x.strip() != '' else None         
-            )
-        else:
-            logger.warning(f"Invalid fake data type for column {column}!")
-
-    return dataframe
 
 def process_config_entries(config_entries, input_dir, mask_folder):
     path = os.getcwd()
@@ -134,7 +88,13 @@ def process_config_entries(config_entries, input_dir, mask_folder):
         body_lines = lines[1:-1]
         body = pd.DataFrame(body_lines, dtype=str)
         column_mappings = dict(column.split('=') for column in column_mappings.split(','))
-        body = replace_columns_with_fake_data(body, column_mappings)
+
+        # Replace "first_name" and "postcode" columns with custom data
+        if '1' in column_mappings:
+            body.iloc[:, 0] = body.iloc[:, 0].apply(replace_first_name)
+        if '5' in column_mappings:
+            body.iloc[:, 4] = body.iloc[:, 4].apply(mask_postcode)
+
         body = body.applymap(lambda x: x.replace("|", ",").replace("\n", " ") if isinstance(x, str) else x)
         csv_body = body.to_csv(index=False, sep='|', header=False, quoting=csv.QUOTE_NONE, quotechar="", escapechar="\\")
 
